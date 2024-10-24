@@ -98,12 +98,12 @@ class Process extends EventEmitter
     * Constructor.
     *
     * @param string $cmd      Command line to run
-    * @param null|string $cwd Current working directory or null to inherit
-    * @param null|array  $env Environment variables or null to inherit
-    * @param null|array  $fds File descriptors to allocate for this process (or null = default STDIO streams)
+    * @param ?string $cwd Current working directory or null to inherit
+    * @param ?array  $env Environment variables or null to inherit
+    * @param ?array  $fds File descriptors to allocate for this process (or null = default STDIO streams)
     * @throws \LogicException On windows or when proc_open() is not installed
     */
-    public function __construct($cmd, $cwd = null, $env = null, $fds = null)
+    public function __construct(string $cmd, ?string $cwd = null, ?array $env = null, ?array $fds = null)
     {
         if ($env !== null && !\is_array($env)) { // manual type check to support legacy PHP < 7.1
             throw new \InvalidArgumentException('Argument #3 ($env) expected null|array');
@@ -160,7 +160,7 @@ class Process extends EventEmitter
      * @param float          $interval    Interval to periodically monitor process state (seconds)
      * @throws \RuntimeException If the process is already running or fails to start
      */
-    public function start($loop = null, $interval = 0.1)
+    public function start(?LoopInterface $loop = null, float $interval = 0.1) : void
     {
         if ($loop !== null && !$loop instanceof LoopInterface) { // manual type check to support legacy PHP < 7.1
             throw new \InvalidArgumentException('Argument #1 ($loop) expected null|React\EventLoop\LoopInterface');
@@ -259,7 +259,7 @@ class Process extends EventEmitter
      * This method should only be invoked via the periodic timer that monitors
      * the process state.
      */
-    public function close()
+    public function close() : void
     {
         if ($this->process === null) {
             return;
@@ -289,10 +289,10 @@ class Process extends EventEmitter
     /**
      * Terminate the process with an optional signal.
      *
-     * @param int $signal Optional signal (default: SIGTERM)
+     * @param ?int $signal Optional signal (default: SIGTERM)
      * @return bool Whether the signal was sent successfully
      */
-    public function terminate($signal = null)
+    public function terminate(?int $signal = null) : bool
     {
         if ($this->process === null) {
             return false;
@@ -307,10 +307,8 @@ class Process extends EventEmitter
 
     /**
      * Get the command string used to launch the process.
-     *
-     * @return string
      */
-    public function getCommand()
+    public function getCommand() : string
     {
         return $this->cmd;
     }
@@ -323,20 +321,16 @@ class Process extends EventEmitter
      *
      * Null may also be returned if the process has terminated, but the exit
      * code could not be determined.
-     *
-     * @return int|null
      */
-    public function getExitCode()
+    public function getExitCode() : ?int
     {
         return $this->exitCode;
     }
 
     /**
      * Get the process ID.
-     *
-     * @return int|null
      */
-    public function getPid()
+    public function getPid() : ?int
     {
         $status = $this->getCachedStatus();
 
@@ -348,10 +342,8 @@ class Process extends EventEmitter
      *
      * This value is only meaningful if isStopped() has returned true. Null will
      * be returned if the process was never stopped.
-     *
-     * @return int|null
      */
-    public function getStopSignal()
+    public function getStopSignal() : ?int
     {
         return $this->stopSignal;
     }
@@ -361,20 +353,16 @@ class Process extends EventEmitter
      *
      * This value is only meaningful if isTerminated() has returned true. Null
      * will be returned if the process was never terminated.
-     *
-     * @return int|null
      */
-    public function getTermSignal()
+    public function getTermSignal() : ?int
     {
         return $this->termSignal;
     }
 
     /**
      * Return whether the process is still running.
-     *
-     * @return bool
      */
-    public function isRunning()
+    public function isRunning() : bool
     {
         if ($this->process === null) {
             return false;
@@ -387,10 +375,8 @@ class Process extends EventEmitter
 
     /**
      * Return whether the process has been stopped by a signal.
-     *
-     * @return bool
      */
-    public function isStopped()
+    public function isStopped() : bool
     {
         $status = $this->getFreshStatus();
 
@@ -399,10 +385,8 @@ class Process extends EventEmitter
 
     /**
      * Return whether the process has been terminated by an uncaught signal.
-     *
-     * @return bool
      */
-    public function isTerminated()
+    public function isTerminated() : bool
     {
         $status = $this->getFreshStatus();
 
@@ -411,10 +395,8 @@ class Process extends EventEmitter
 
     /**
      * Return the cached process status.
-     *
-     * @return array
      */
-    private function getCachedStatus()
+    private function getCachedStatus() : array
     {
         if ($this->status === null) {
             $this->updateStatus();
@@ -425,10 +407,8 @@ class Process extends EventEmitter
 
     /**
      * Return the updated process status.
-     *
-     * @return array
      */
-    private function getFreshStatus()
+    private function getFreshStatus() : array
     {
         $this->updateStatus();
 
@@ -442,7 +422,7 @@ class Process extends EventEmitter
      * signaled, respectively. Otherwise, signal values will remain as-is so the
      * corresponding getter methods may be used at a later point in time.
      */
-    private function updateStatus()
+    private function updateStatus() : void
     {
         if ($this->process === null) {
             return;
